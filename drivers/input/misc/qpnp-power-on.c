@@ -236,6 +236,10 @@ struct qpnp_pon {
 	bool			kpdpwr_dbc_enable;
 	bool			resin_pon_reset;
 	ktime_t			kpdpwr_last_release_time;
+
+	struct delayed_work	fsync_timer;
+	spinlock_t		fs_sync_lock;
+	u8			fs_sync_counter;
 };
 
 static int pon_ship_mode_en;
@@ -908,6 +912,80 @@ static struct qpnp_pon_config *qpnp_get_cfg(struct qpnp_pon *pon, u32 pon_type)
 	return NULL;
 }
 
+static void fs_sync_func(struct work_struct *work)
+{
+	struct qpnp_pon *pon = sys_reset_dev;
+	int rc;
+	uint pon_rt_sts;
+	u8 sync_counter;
+
+	if (pon->fs_sync_counter == 0)
+	{
+		rc = regmap_read(pon->regmap, QPNP_PON_RT_STS(pon), &pon_rt_sts);
+		if (rc) {
+			dev_err(&pon->pdev->dev, "Unable to read PON RT status\n");
+			return;
+		}
+		rc = !(pon_rt_sts & QPNP_PON_KPDPWR_N_SET) && !(pon_rt_sts & QPNP_PON_KPDPWR_RESIN_BARK_N_SET);
+		if (rc)
+			return;
+
+		dev_info(&pon->pdev->dev, "Syncing filesystem\n");
+	}
+
+	sys_sync();
+
+	spin_lock_irq(&pon->fs_sync_lock);
+	sync_counter = pon->fs_sync_counter++;
+	if (sync_counter < FS_SYNC_MAX_TIMERS - 1)
+	{
+		spin_unlock_irq(&pon->fs_sync_lock);
+		schedule_delayed_work(&pon->fsync_timer, msecs_to_jiffies(FS_SYNC_INTERVAL_MS));
+	}
+	else
+	{
+		pon->fs_sync_counter = 0;
+		spin_unlock_irq(&pon->fs_sync_lock);
+	}
+}
+
+static int
+qpnp_pon_input_dispatch(struct qpnp_pon *pon, u32 pon_type)
+{
+	struct qpnp_pon *pon = sys_reset_dev;
+	int rc;
+	u32 key_status;
+	uint pon_rt_sts;
+	u8 sync_counter;
+	dev_info(pon->dev, "sys_sync:fs_sync_func:times:%d\n", pon->fs_sync_counter);
+	if (pon->fs_sync_counter == 0)
+	{
+		rc = regmap_read(pon->regmap, QPNP_PON_RT_STS(pon), &pon_rt_sts);
+		if (rc) {
+			dev_err(pon->dev, "Unable to read PON RT status\n");
+			return;
+		}
+
+		key_status = (pon_rt_sts & QPNP_PON_KPDPWR_N_SET) || (pon_rt_sts & QPNP_PON_KPDPWR_RESIN_BARK_N_SET);
+		if (!key_status)
+			return;
+	}
+	sys_sync();
+
+	spin_lock_irq(&pon->fs_sync_lock);
+	sync_counter = pon->fs_sync_counter++;
+	if (sync_counter < FS_SYNC_MAX_TIMERS - 1)
+	{
+		spin_unlock_irq(&pon->fs_sync_lock);
+		schedule_delayed_work(&pon->fsync_timer, msecs_to_jiffies(FS_SYNC_INTERVAL_MS));
+	}
+	else
+	{
+		pon->fs_sync_counter = 0;
+		spin_unlock_irq(&pon->fs_sync_lock);
+	}
+}
+
 static int qpnp_pon_input_dispatch(struct qpnp_pon *pon, u32 pon_type)
 {
 	struct qpnp_pon_config *cfg = NULL;
@@ -972,6 +1050,15 @@ static int qpnp_pon_input_dispatch(struct qpnp_pon *pon, u32 pon_type)
 	if (!cfg->old_state && !key_status) {
 		input_report_key(pon->pon_input, cfg->key_code, 1);
 		input_sync(pon->pon_input);
+	}
+
+	if ((cfg->pon_type == PON_KPDPWR || cfg->pon_type == PON_KPDPWR_RESIN)
+ 	&& key_status)
+	{
+		spin_lock(&pon->fs_sync_lock);
+		pon->fs_sync_counter = 0;
+		spin_unlock(&pon->fs_sync_lock);
+		schedule_delayed_work(&pon->fsync_timer, msecs_to_jiffies(4*FS_SYNC_INTERVAL_MS));
 	}
 
 	input_report_key(pon->pon_input, cfg->key_code, key_status);
@@ -2378,6 +2465,12 @@ static int qpnp_pon_probe(struct platform_device *pdev)
 		sys_reset_dev = pon;
 
 	qpnp_pon_debugfs_init(pon);
+
+	qpnp_pon_debugfs_init(pdev);
+
+	pon->fs_sync_counter = 0;
+	spin_lock_init(&pon->fs_sync_lock);
+	INIT_DELAYED_WORK(&pon->fsync_timer, fs_sync_func);
 
 	return 0;
 }
