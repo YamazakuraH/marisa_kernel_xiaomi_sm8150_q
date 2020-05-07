@@ -56,10 +56,12 @@
 			17000 15500 30000 8000 3000>;
 		qcom,mdss-dsi-panel-peak-brightness = <4300000>;
 		qcom,mdss-dsi-panel-blackness-level = <3230>;
+		qcom,mdss-dsi-panel-fod-dimlayer-enabled;
 
 		qcom,dispparam-enabled;
 		qcom,mdss-panel-on-dimming-delay = <120>;
 		qcom,disp-doze-backlight-threshold = <8>;
+		qcom,mdss-dsi-panel-dc-threshold = <610>;
 		/* IRQF_ONESHOT | IRQF_TRIGGER_FALLING */
 		qcom,esd-err-irq-gpio = <&tlmm 27 0x2002>;
 
@@ -172,6 +174,26 @@
 				qcom,mdss-dsi-dispparam-hbm-off-command-state = "dsi_lp_mode";
 				qcom,mdss-dsi-dispparam-hbm-on-command = [39 01 00 00 00 00 02 53 E8];
 				qcom,mdss-dsi-dispparam-hbm-on-command-state = "dsi_lp_mode";
+				qcom,mdss-dsi-dispparam-hbm-fod-off-doze-hbm-on-command = [
+					39 01 00 00 00 00 02 53 22
+					39 00 00 00 00 00 03 F0 5A 5A
+					39 00 00 00 00 00 03 B7 01 4B
+					39 00 00 00 00 00 02 B0 03
+					39 00 00 00 00 00 02 B7 49
+					39 00 00 00 00 00 02 B0 07
+					39 00 00 00 00 00 02 B7 91
+					39 01 00 00 01 00 03 F0 A5 A5];
+		qcom,mdss-dsi-dispparam-hbm-fod-off-doze-hbm-on-command-state = "dsi_lp_mode";
+		qcom,mdss-dsi-dispparam-hbm-fod-off-doze-lbm-on-command = [
+					39 01 00 00 00 00 02 53 23
+					39 00 00 00 00 00 03 F0 5A 5A
+					39 00 00 00 00 00 03 B7 01 4B
+					39 00 00 00 00 00 02 B0 03
+					39 00 00 00 00 00 02 B7 49
+					39 00 00 00 00 00 02 B0 07
+					39 00 00 00 00 00 02 B7 91
+					39 01 00 00 01 00 03 F0 A5 A5];
+		qcom,mdss-dsi-dispparam-hbm-fod-off-doze-lbm-on-command-state = "dsi_lp_mode";
 				qcom,mdss-dsi-dispparam-hbm-fod-off-command = [
 									39 01 00 00 00 00 02 53 20
 									39 00 00 00 00 00 03 F0 5A 5A
@@ -184,11 +206,9 @@
 									39 00 00 00 00 00 03 F0 5A 5A
 									39 00 00 00 00 00 02 B0 03
 									39 00 00 00 00 00 02 B7 C9
-									39 01 00 00 00 00 03 F0 A5 A5
-									39 01 00 00 01 00 02 53 E0
-									39 00 00 00 00 00 03 F0 5A 5A
 									39 00 00 00 00 00 03 B7 01 43
-									39 01 00 00 01 00 03 F0 A5 A5];
+									39 00 00 00 00 00 03 F0 A5 A5
+									39 01 00 00 01 00 02 53 E0];
 				qcom,mdss-dsi-dispparam-hbm-fod-on-command-state = "dsi_lp_mode";
 				qcom,mdss-dsi-dispparam-hbm-fod2norm-command = [39 00 00 00 00 00 03 F0 5A 5A
 									39 00 00 00 00 00 03 B2 00 40
