@@ -5339,7 +5339,16 @@ static void fts_cmd_update_work(struct work_struct *work)
 
 static int fts_set_cur_value(int mode, int value)
 {
-
+	logError(1, "%s %s, mode:%d,value:%d\n", tag, __func__, mode, value);
+	if (mode == Touch_Fod_Enable && fts_info && value >= 0)
+		return fts_set_fod_status(value);
+	if (mode == Touch_Aod_Enable && fts_info && value >= 0)
+		return fts_set_aod_status(value);
+	if (mode == Touch_Doubletap_Mode && fts_info && value >= 0) {
+		fts_info->gesture_enabled = value;
+		schedule_work(&fts_info->switch_mode_work);
+		return 0;
+	}
 	if (mode < Touch_Mode_NUM && mode >= 0) {
 
 		xiaomi_touch_interfaces.touch_mode[mode][SET_CUR_VALUE] = value;
