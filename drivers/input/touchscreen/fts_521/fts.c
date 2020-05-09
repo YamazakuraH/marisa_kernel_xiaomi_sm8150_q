@@ -5337,6 +5337,31 @@ static void fts_cmd_update_work(struct work_struct *work)
 	return;
 }
 
+static int fts_set_fod_status(int value)
+{
+	int res = 0;
+	u8 gesture_cmd[6] = {0xA2, 0x03, 0x00, 0x00, 0x00, 0x03};
+
+	fts_info->fod_status = value;
+	if (fts_info->fod_status == 2) {
+		mutex_lock(&fts_info->fod_mutex);
+		res = fts_write(gesture_cmd, ARRAY_SIZE(gesture_cmd));
+		if (res < OK)
+			logError(1, "%s %s: enter gesture and longpress failed! ERROR %08X recovery in senseOff...\n",
+			tag, __func__, res);
+		else
+			logError(1, "%s %s send gesture and longpress cmd success\n", tag, __func__);
+		mutex_unlock(&fts_info->fod_mutex);
+	}
+	return res;
+}
+
+static int fts_set_aod_status(int value)
+{
+	fts_info->aod_status = value;
+	return 0;
+}
+
 static int fts_set_cur_value(int mode, int value)
 {
 	logError(1, "%s %s, mode:%d,value:%d\n", tag, __func__, mode, value);
