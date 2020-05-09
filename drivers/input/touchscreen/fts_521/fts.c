@@ -213,6 +213,24 @@ void release_all_touches(struct fts_ts_info *info)
  * X1X2X3X4 = 4 bytes in HEX format which represent an error code (00000000 no error) \n
  * } = end byte
  */
+
+#ifdef CONFIG_FTS_FOD_AREA_REPORT
+static bool fts_fingerprint_is_enable(void)
+{
+/* fod status = -1 as default value, means fingerprint is not enabled*
+ * fod_status = 100 as all fingers in the system is deleted
+ * fod_status = 0 means fingerpirint is not enabled
+ * fod_status = 1 means fingerprint is in authentication
+ * fod_status = 2 means fingerprint is in enroll
+ */
+	if (fts_info->fod_status != 0 && fts_info->fod_status != -1 && fts_info->fod_status != 100)
+		return true;
+	else
+		return false;
+}
+
+#endif
+
 static ssize_t fts_fwupdate_store(struct device *dev,
 				  struct device_attribute *attr,
 				  const char *buf, size_t count)
@@ -3122,7 +3140,9 @@ static void fts_nop_event_handler(struct fts_ts_info *info,
 
 #ifdef CONFIG_FTS_FOD_AREA_REPORT
 static bool fts_is_in_fodarea(int x, int y)
-{
+{	
+	if (!fts_info)
+		return false;
 	if ((x > FOD_LX && x < FOD_LX + FOD_SIDE) && (y > FOD_LY && y < FOD_LY +
 	FOD_SIDE))
 		return true;
@@ -3238,14 +3258,13 @@ static void fts_enter_pointer_event_handler(struct fts_ts_info *info,
 #ifdef CONFIG_FTS_FOD_AREA_REPORT
 		if (fts_is_in_fodarea(x, y) && !(info->fod_id & ~(1 << touchId))) {
 			__set_bit(touchId, &info->sleep_finger);
-			if (info->fod_status) {
+			if (fts_fingerprint_is_enable()) {
 				info->fod_x = x;
 				info->fod_y = y;
 				info->fod_coordinate_update = true;
 				__set_bit(touchId, &info->fod_id);
 				input_report_abs(info->input_dev, ABS_MT_WIDTH_MINOR, info->fod_overlap);
-				logError(1,	"%s  %s :  FOD Press :%d, fod_id:%08x\n", tag, __func__,
-				touchId, info->fod_id);
+				logError(1,	"%s  %s :  FOD Press :%d, fod_id:%08x\n", tag, __func__, touchId, info->fod_id);
 			}
 		} else if (__test_and_clear_bit(touchId, &info->fod_id)) {
 			input_report_abs(info->input_dev, ABS_MT_WIDTH_MINOR, 0);
