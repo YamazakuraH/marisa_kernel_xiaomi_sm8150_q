@@ -48,6 +48,10 @@ enum  MODE_TYPE {
 	Touch_Fod_Enable       = 10,
 	Touch_Aod_Enable       = 11,
 	Touch_Mode_NUM         = 12,
+	Touch_Resist_RF        = 16,
+	Touch_Idle_Time        = 13,
+	Touch_Doubletap_Mode   = 14,
+	Touch_Grip_Mode        = 15,
 };
 
 struct xiaomi_touch_interface {
