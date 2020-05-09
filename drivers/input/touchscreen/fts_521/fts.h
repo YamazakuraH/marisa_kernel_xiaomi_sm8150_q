@@ -360,6 +360,7 @@ struct fts_ts_info {
 	bool fod_coordinate_update;
 	bool fod_status_set;
 	bool fod_pressed;
+	int aod_status;
 	bool p_sensor_changed;
 	bool p_sensor_switch;
 	bool palm_sensor_changed;
