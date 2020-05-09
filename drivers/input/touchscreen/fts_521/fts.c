@@ -5390,7 +5390,6 @@ static int fts_set_cur_value(int mode, int value)
 		return fts_set_aod_status(value);
 	if (mode == Touch_Doubletap_Mode && fts_info && value >= 0) {
 		fts_info->gesture_enabled = value;
-		schedule_work(&fts_info->switch_mode_work);
 		return 0;
 	}
 	if (mode < Touch_Mode_NUM && mode >= 0) {
