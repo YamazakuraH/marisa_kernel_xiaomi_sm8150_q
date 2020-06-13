@@ -3132,6 +3132,20 @@ static bool fts_is_in_fodarea(int x, int y)
 
 static bool finger_report_flag;
 
+static bool fts_fingerprint_is_enable(void)
+{
+/* fod status = -1 as default value, means fingerprint is not enabled*
+ * fod_status = 100 as all fingers in the system is deleted
+ * fod_status = 0 means fingerpirint is not enabled
+ * fod_status = 1 means fingerprint is in authentication
+ * fod_status = 2 means fingerprint is in enroll
+ */
+	if (fts_info->fod_status != 0 && fts_info->fod_status != -1 && fts_info->fod_status != 100)
+		return true;
+	else
+		return false;
+}
+
 #endif
 /**
 * Event handler for enter and motion events (EVT_ID_ENTER_POINT, EVT_ID_MOTION_POINT )
@@ -3238,14 +3252,13 @@ static void fts_enter_pointer_event_handler(struct fts_ts_info *info,
 #ifdef CONFIG_FTS_FOD_AREA_REPORT
 		if (fts_is_in_fodarea(x, y) && !(info->fod_id & ~(1 << touchId))) {
 			__set_bit(touchId, &info->sleep_finger);
-			if (info->fod_status) {
+			if (fts_fingerprint_is_enable()) {
 				info->fod_x = x;
 				info->fod_y = y;
 				info->fod_coordinate_update = true;
 				__set_bit(touchId, &info->fod_id);
 				input_report_abs(info->input_dev, ABS_MT_WIDTH_MINOR, info->fod_overlap);
-				logError(1,	"%s  %s :  FOD Press :%d, fod_id:%08x\n", tag, __func__,
-				touchId, info->fod_id);
+				//logError(1,	"%s  %s :  FOD Press :%d, fod_id:%08x\n", tag, __func__,touchId, info->fod_id);
 			}
 		} else if (__test_and_clear_bit(touchId, &info->fod_id)) {
 			input_report_abs(info->input_dev, ABS_MT_WIDTH_MINOR, 0);
@@ -3740,7 +3753,11 @@ static void fts_gesture_event_handler(struct fts_ts_info *info,
 	if (event[0] == EVT_ID_USER_REPORT && event[1] == EVT_TYPE_USER_GESTURE) {
 		needCoords = 1;
 #ifdef CONFIG_FTS_FOD_AREA_REPORT
-		if (event[2] == GEST_ID_LONG_PRESS && info->fod_status) {
+		if (event[2] == GEST_ID_LONG_PRESS) {
+			if (!fts_fingerprint_is_enable()) {
+				logError(1, "%s %s fingerprint is not enabled,don't need to report fod event\n", tag, __func__);
+				goto gesture_done;
+			}
 			touch_area = (event[9] << 8) | (event[8]);
 			fod_overlap = (event[11] << 8) | (event[10]);
 			if ((!info->sensor_sleep && info->fod_coordinate_update &&
@@ -3781,8 +3798,7 @@ static void fts_gesture_event_handler(struct fts_ts_info *info,
 						}
 						input_report_abs(info->input_dev, ABS_MT_WIDTH_MAJOR, touch_area);
 						input_report_abs(info->input_dev, ABS_MT_WIDTH_MINOR, fod_overlap);
-						logError(1, "%s %s id:%d, fod_id:%08x, touch_area:%d, overlap:%d,fod report\n",
-										tag, __func__, fod_id, info->fod_id, touch_area, fod_overlap);
+						//logError(1, "%s %s id:%d, fod_id:%08x, touch_area:%d, overlap:%d,fod report\n",tag, __func__, fod_id, info->fod_id, touch_area, fod_overlap);
 					}
 					input_sync(info->input_dev);
 				}
