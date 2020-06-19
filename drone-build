@@ -92,5 +92,4 @@ mkzip_raphael(){
 
 tg_notify "LOG: START BUILDING!"
 buildCepheus
-buildRaphael
 log "Build finished for #${DRONE_BUILD_NUMBER} ( ${date} )."
