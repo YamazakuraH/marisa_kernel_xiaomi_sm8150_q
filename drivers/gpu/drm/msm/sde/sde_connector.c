@@ -24,6 +24,8 @@
 #include "dsi_display.h"
 #include "sde_crtc.h"
 #include "sde_rm.h"
+#include "dsi_panel.h"
+#include "sde_trace.h"
 
 #define BL_NODE_NAME_SIZE 32
 
