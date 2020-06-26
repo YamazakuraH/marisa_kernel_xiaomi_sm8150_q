@@ -91,6 +91,8 @@ mkzip_raphael(){
 }
 
 tg_notify "LOG: START BUILDING!"
+git submodule init
+git submodule update
 buildCepheus
 rm -rf /drone/src/out
 cd /drone/src/

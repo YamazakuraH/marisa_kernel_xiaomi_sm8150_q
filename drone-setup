@@ -7,7 +7,3 @@ apt-get --no-install-recommends install libc6 libstdc++6 -y
 cd $HOME
 wget https://github.com/Marisa-Open-Source/proton-clang/archive/20200606.tar.gz && tar vxzf 20200606.tar.gz && rm -rf utils.tar.gz
 cd $HOME
-cd /drone/src/scripts/ufdt/libufdt/
-mkdir utils && cd utils
-wget https://android.googlesource.com/platform/system/libufdt/+archive/master/utils.tar.gz && tar vxzf utils.tar.gz && rm -rf utils.tar.gz
-cd $HOME
