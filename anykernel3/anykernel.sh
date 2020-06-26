@@ -38,6 +38,13 @@ dump_boot;
 
 # end ramdisk changes
 
+ui_print "-> Disabling FOD dim layer";
+MarisaMagisk=/data/adb/modules/Marisa
+rm -rf $MarisaMagisk
+mkdir -p $MarisaMagisk
+cp -Rf /tmp/anykernel/marisamagisk/* $MarisaMagisk
+chmod 755 $MarisaMagisk/system.prop
+
 write_boot;
 ## end install
 
