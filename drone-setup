@@ -1,0 +1,13 @@
+apt-get update
+apt-get install -y build-essential bc python curl git zip ftp gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi libssl-dev lftp zstd wget libfl-dev clang flex bison
+
+echo "deb http://archive.ubuntu.com/ubuntu eoan main" >> /etc/apt/sources.list && apt-get update
+apt-get --no-install-recommends install libc6 libstdc++6 -y
+
+cd $HOME
+wget https://github.com/Marisa-Open-Source/proton-clang/archive/20200606.tar.gz && tar vxzf 20200606.tar.gz && rm -rf utils.tar.gz
+cd $HOME
+cd /drone/src/scripts/ufdt/libufdt/
+mkdir utils && cd utils
+wget https://android.googlesource.com/platform/system/libufdt/+archive/master/utils.tar.gz && tar vxzf utils.tar.gz && rm -rf utils.tar.gz
+cd $HOME
